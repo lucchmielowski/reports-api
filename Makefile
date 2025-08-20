@@ -42,6 +42,24 @@ build:
 fmt:
 	go fmt ./...
 
+# Linting checks
+
+.PHONY: fmt-check
+fmt-check:
+	@echo "Checking go fmt..." >&2
+	@git --no-pager diff .
+	@echo 'If this test fails, it is because the git diff is non-empty after running "make fmt".' >&2
+	@echo 'To correct this, locally run "make fmt" and commit the changes.' >&2
+	@git diff --quiet --exit-code .
+
+.PHONY: unused-package-check
+unused-package-check:
+	@tidy=$$(go mod tidy); \
+	if [ -n "$${tidy}" ]; then \
+		echo "go mod tidy checking failed!"; echo "$${tidy}"; echo; \
+	fi
+
+
 # Run go vet against code
 vet:
 	go vet ./...
