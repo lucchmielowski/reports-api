@@ -22,3 +22,7 @@ bin
 *.swp
 *.swo
 *~
+
+# Helm
+chart-tmp/
+.dist/
