@@ -14,12 +14,6 @@ runs:
     - uses: jlumbroso/free-disk-space@v1.3.1         # pin to the latest v1.3.1 release
       if: ${{ inputs.free-disk-space == 'true' }}
       with:
-        android: true
-        docker-images: false
-        dotnet: true
-        haskell: true
-        large-packages: false
-        swap-storage: false
         tool-cache: true
     - shell: bash
       if: ${{ inputs.unshallow == 'true' }}
