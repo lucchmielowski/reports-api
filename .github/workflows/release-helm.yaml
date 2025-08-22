@@ -5,7 +5,7 @@ permissions: {}
 on:
   push:
     tags:
-      - reports-api-v*
+      - openreports-v*
 
 jobs:
   lint-artifacthub:
@@ -45,14 +45,14 @@ jobs:
         run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
       
       - name: Set semver version
-        run: echo "RELEASE_SEMVER_VERSION=${RELEASE_VERSION#reports-api-}" >> $GITHUB_ENV
+        run: echo "RELEASE_SEMVER_VERSION=${RELEASE_VERSION#openreports-}" >> $GITHUB_ENV
         env:
           RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
 
       - name: Create charts tmp directory
         run: |
           mkdir -p charts-tmp
-          cp -r chart charts-tmp/reports-api
+          cp -r chart charts-tmp/openreports
       
       - name: Run chart-releaser
         uses: stefanprodan/helm-gh-pages@0ad2bb377311d61ac04ad9eb6f252fb68e207260 #v1.7.0
@@ -68,8 +68,8 @@ jobs:
       
       - name: Publish OCI Chart
         run: |
-          helm package charts-tmp/reports-api --destination .dist/
-          helm push .dist/reports-api-*.tgz oci://ghcr.io/${{ github.repository_owner }}/charts |& tee .digest
+          helm package charts-tmp/openreports --version ${{ env.RELEASE_SEMVER_VERSION }} --destination .dist/
+          helm push .dist/openreports-*.tgz oci://ghcr.io/${{ github.repository_owner }}/charts |& tee .digest
           cosign login --username ${GITHUB_ACTOR} --password ${{ secrets.GITHUB_TOKEN }} ghcr.io
-          cosign sign --yes ghcr.io/${{ github.repository_owner }}/charts/reports-api@${cat .digest | awk -F "[, ]" '/Digest/{print $NF}'}
+          cosign sign --yes ghcr.io/${{ github.repository_owner }}/charts/openreports@${cat .digest | awk -F "[, ]" '/Digest/{print $NF}'}
 
