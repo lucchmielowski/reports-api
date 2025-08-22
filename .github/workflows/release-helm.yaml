@@ -55,6 +55,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           linting: off
           charts_dir: charts-tmp
+          chart_version: ${{ env.RELEASE_VERSION }}
       
       - name: Login to GitHub container registry
         run: |
