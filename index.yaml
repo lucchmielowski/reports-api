@@ -6,6 +6,18 @@ entries:
       artifacthub.io/prerelease: "false"
     apiVersion: v2
     appVersion: latest
+    created: "2025-08-22T20:13:14.321973827Z"
+    description: A Helm chart for installing openreports APIs.
+    digest: 481103b0341673d0f93511efc788e70568f64cea98733668cfe5b8d9ad6ea1a4
+    name: openreports
+    urls:
+    - https://lucchmielowski.github.io/reports-api/openreports-v0.1.9.tgz
+    version: v0.1.9
+  - annotations:
+      artifacthub.io/operator: "false"
+      artifacthub.io/prerelease: "false"
+    apiVersion: v2
+    appVersion: latest
     created: "2025-08-22T15:30:51.912632902Z"
     description: A Helm chart for installing openreports APIs.
     digest: 48c9b78f22c743f8e7085e04691a3a2130f8fa1b82b3e010f2671b924f477f10
@@ -13,4 +25,4 @@ entries:
     urls:
     - https://lucchmielowski.github.io/reports-api/openreports-v0.0.0.tgz
     version: v0.0.0
-generated: "2025-08-22T15:30:51.911791301Z"
+generated: "2025-08-22T20:13:14.321601305Z"
