@@ -62,7 +62,7 @@ jobs:
       
       - name: Publish OCI Chart
         run: |
-          helm package chart-tmp/reports-api --destination .dist/
+          helm package charts-tmp/reports-api --destination .dist/
           helm push .dist/reports-api-*.tgz oci://ghcr.io/${{ github.repository_owner }}/charts |& tee .digest
           cosign login --username ${GITHUB_ACTOR} --password ${{ secrets.GITHUB_TOKEN }} ghcr.io
           cosign sign --yes ghcr.io/${{ github.repository_owner }}/charts/reports-api@${cat .digest | awk -F "[, ]" '/Digest/{print $NF}'}
