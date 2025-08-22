@@ -71,5 +71,5 @@ jobs:
           helm package charts-tmp/openreports --version ${{ env.RELEASE_SEMVER_VERSION }} --destination .dist/
           helm push .dist/openreports-*.tgz oci://ghcr.io/${{ github.repository_owner }}/charts |& tee .digest
           cosign login --username ${GITHUB_ACTOR} --password ${{ secrets.GITHUB_TOKEN }} ghcr.io
-          cosign sign --yes ghcr.io/${{ github.repository_owner }}/charts/openreports@${cat .digest | awk -F "[, ]" '/Digest/{print $NF}'}
+          cosign sign --yes ghcr.io/${{ github.repository_owner }}/charts/openreports@$(cat .digest | awk -F "[, ]" '/Digest/{print $NF}')
 
