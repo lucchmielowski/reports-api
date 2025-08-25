@@ -132,6 +132,20 @@ codegen-manifest-release: manifests
 	@$(HELM) template openreports chart/ \
 	| $(SED) -e '/^#.*/d' > ./.manifest/release.yaml
 
+#################
+# RELEASE NOTES #
+#################
+
+.PHONY: release-notes
+release-notes: ## Generate release notes
+	@echo Generating release notes... >&2
+	@bash -c 'while IFS= read -r line ; do if [[ "$$line" == "## "* && "$$line" != "## $(VERSION)" ]]; then break ; fi; echo "$$line"; done < "CHANGELOG.md"' \
+	true
+
+#########
+# UTILS #
+#########
+
 .PHONY: copy-crd-to-helm
 copy-crd-to-helm: manifests ## Generate CRD YAMLs and copy them to the Helm chart templates directory
 	cp crd/openreports.io/v1alpha1/*.yaml chart/templates/
