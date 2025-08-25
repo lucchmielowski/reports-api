@@ -25,4 +25,6 @@ bin
 
 # Helm
 charts-tmp/
-.dist/
+.dist
+.tools
+.manifest

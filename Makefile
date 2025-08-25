@@ -19,20 +19,27 @@ CONTROLLER_GEN                     ?= $(LOCALBIN)/controller-gen
 GEN_CRD_API_REFERENCE_DOCS         ?= $(LOCALBIN)/crd-ref-docs
 GEN_CRD_API_REFERENCE_DOCS_VERSION ?= latest
 
-all: code-generator manifests generate generate-api-docs generate-client build fmt vet 
+#########
+# TOOLS #
+#########
+TOOLS_DIR                          ?= $(PWD)/.tools
+HELM                               ?= $(TOOLS_DIR)/helm
+HELM_VERSION                       ?= v3.17.3
+TOOLS	:= $(HELM)
+SED     := $(shell if [ "$(GOOS)" = "darwin" ]; then echo "gsed"; else echo "sed"; fi)
 
-.PHONY: manifests
-manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./apis/openreports.io/v1alpha1" output:crd:artifacts:config=crd/openreports.io/v1alpha1
+$(HELM):
+	@echo Install helm... >&2
+	@GOBIN=$(TOOLS_DIR) go install helm.sh/helm/v3/cmd/helm@$(HELM_VERSION)
 
-.PHONY: generate
-generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
-	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./apis/..."
+.PHONY: install-tools
+install-tools: ## Install tools
+install-tools: $(TOOLS)
 
-.PHONY: generate-client
-generate-client:
-	./hack/update-codegen.sh
-
+.PHONY: clean-tools
+clean-tools: ## Remove installed tools
+	@echo Clean tools... >&2
+	@rm -rf $(TOOLS_DIR)
 
 # Run go build against code
 build:
@@ -64,6 +71,25 @@ unused-package-check:
 vet:
 	go vet ./...
 
+
+###########
+# CODEGEN #
+###########
+
+all: code-generator manifests generate generate-api-docs generate-client build fmt vet 
+
+.PHONY: manifests
+manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./apis/openreports.io/v1alpha1" output:crd:artifacts:config=crd/openreports.io/v1alpha1
+
+.PHONY: generate
+generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./apis/..."
+
+.PHONY: generate-client
+generate-client:
+	./hack/update-codegen.sh
+
 .PHONY: controller-gen
 controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary. If wrong version is installed, it will be overwritten.
 $(CONTROLLER_GEN): $(LOCALBIN)
@@ -89,6 +115,7 @@ $(GEN_CRD_API_REFERENCE_DOCS): $(LOCALBIN)
 	$(call go-install-tool,$(GEN_CRD_API_REFERENCE_DOCS),github.com/elastic/crd-ref-docs,$(GEN_CRD_API_REFERENCE_DOCS_VERSION))
 
 .PHONY: codegen-api-docs
+codegen-api-docs: ## Generate API docs
 codegen-api-docs: $(PACKAGE_SHIM) $(GEN_CRD_API_REFERENCE_DOCS) $(GENREF) ## Generate API docs
 	@echo Generate api docs... >&2
 	$(GEN_CRD_API_REFERENCE_DOCS) -v=4 \
@@ -96,6 +123,14 @@ codegen-api-docs: $(PACKAGE_SHIM) $(GEN_CRD_API_REFERENCE_DOCS) $(GENREF) ## Gen
 		-config docs/config.json \
 		-template-dir docs/template \
 		-out-file docs/index.html
+
+.PHONY: codegen-manifest-release
+codegen-manifest-release: ## Create CRD release manifest
+codegen-manifest-release: manifests
+	@echo Generating manifests for release... >&2
+	@mkdir -p ./.manifest
+	@$(HELM) template openreports chart/ \
+	| $(SED) -e '/^#.*/d' > ./.manifest/release.yaml
 
 .PHONY: copy-crd-to-helm
 copy-crd-to-helm: manifests ## Generate CRD YAMLs and copy them to the Helm chart templates directory
@@ -114,3 +149,11 @@ GOBIN=$(LOCALBIN) go install $${package} ;\
 mv "$$(echo "$(1)" | sed "s/-$(3)$$//")" $(1) ;\
 }
 endef
+
+
+########
+# HELP #
+########
+.PHONY: help
+help: ## Shows the available commands
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-40s\033[0m %s\n", $$1, $$2}'
