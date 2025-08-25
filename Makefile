@@ -18,6 +18,23 @@ CONTROLLER_TOOLS_VERSION           ?= v0.18.0
 CONTROLLER_GEN                     ?= $(LOCALBIN)/controller-gen
 GEN_CRD_API_REFERENCE_DOCS         ?= $(LOCALBIN)/crd-ref-docs
 GEN_CRD_API_REFERENCE_DOCS_VERSION ?= latest
+HELM                               ?= $(LOCALBIN)/helm
+HELM_VERSION                       ?= v3.17.3
+TOOLS := $(HELM)
+SED     := $(shell if [ "$(GOOS)" = "darwin" ]; then echo "gsed"; else echo "sed"; fi)
+
+$(HELM):
+	@echo Install helm... >&2
+	@GOBIN=$(LOCALBIN) go install helm.sh/helm/v3/cmd/helm@$(HELM_VERSION)
+
+.PHONY: install-tools
+install-tools: ## Install tools
+install-tools: $(TOOLS)
+
+.PHONY: clean-tools
+clean-tools: ## Remove installed tools
+	@echo Clean tools... >&2
+	@rm -rf $(LOCALBIN)
 
 all: code-generator manifests generate generate-api-docs generate-client build fmt vet 
 
@@ -41,6 +58,14 @@ build:
 # Run go fmt against code
 fmt:
 	go fmt ./...
+
+.PHONY: fmt-check
+fmt-check:
+	@echo "Checking go fmt..." >&2
+	@git --no-pager diff .
+	@echo 'If this test fails, it is because the git diff is non-empty after running "make fmt".' >&2
+	@echo 'To correct this, locally run "make fmt" and commit the changes.' >&2
+	@git diff --quiet --exit-code .
 
 # Run go vet against code
 vet:
@@ -78,6 +103,22 @@ codegen-api-docs: $(PACKAGE_SHIM) $(GEN_CRD_API_REFERENCE_DOCS) $(GENREF) ## Gen
 		-config docs/config.json \
 		-template-dir docs/template \
 		-out-file docs/index.html
+
+.PHONY: codegen-manifest-release
+codegen-manifest-release: ## Create CRD release manifest
+codegen-manifest-release: manifests
+	@echo Generating manifests for release... >&2
+	@mkdir -p ./.manifest
+	@$(HELM) template openreports chart/ \
+	| $(SED) -e '/^#.*/d' > ./.manifest/release.yaml
+
+.PHONY: verify-codegen
+verify-codegen: ## Verify all generated code are up to date
+verify-codegen: all
+	@echo Checking git diff... >&2
+	@echo 'If this test fails, it is because the git diff is non-empty after running "make codegen-all".' >&2
+	@echo 'To correct this, locally run "make codegen-all" and commit the changes.' >&2
+	@git diff --exit-code .
 
 .PHONY: copy-crd-to-helm
 copy-crd-to-helm: manifests ## Generate CRD YAMLs and copy them to the Helm chart templates directory
