@@ -54,6 +54,11 @@ func (in *ClusterReport) DeepCopyInto(out *ClusterReport) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.Test != nil {
+		in, out := &in.Test, &out.Test
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

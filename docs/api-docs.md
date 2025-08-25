@@ -40,6 +40,7 @@ _Appears in:_
 | `configuration` _[ReportConfiguration](#reportconfiguration)_ | Configuration is an optional field which can be used to specify<br />a contract between Report generators and consumers |  |  |
 | `summary` _[ReportSummary](#reportsummary)_ | ReportSummary provides a summary of results |  |  |
 | `results` _[ReportResult](#reportresult) array_ | ReportResult provides result details |  |  |
+| `test` _string array_ | Test provides a test field |  |  |
 
 
 #### ClusterReportList

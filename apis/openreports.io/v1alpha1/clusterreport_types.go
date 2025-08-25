@@ -72,6 +72,10 @@ type ClusterReport struct {
 	// ReportResult provides result details
 	// +optional
 	Results []ReportResult `json:"results,omitempty"`
+
+	// Test provides a test field
+	// +optional
+	Test []string `json:"test,omitempty"`
 }
 
 // ClusterReportList contains a list of ClusterReport

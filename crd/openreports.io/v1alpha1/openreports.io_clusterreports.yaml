@@ -393,6 +393,11 @@ spec:
                   requirements were not met
                 type: integer
             type: object
+          test:
+            description: Test provides a test field
+            items:
+              type: string
+            type: array
         type: object
     served: true
     storage: true

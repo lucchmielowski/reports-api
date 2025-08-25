@@ -35,6 +35,7 @@ type ClusterReportApplyConfiguration struct {
 	Configuration                    *ReportConfigurationApplyConfiguration `json:"configuration,omitempty"`
 	Summary                          *ReportSummaryApplyConfiguration       `json:"summary,omitempty"`
 	Results                          []ReportResultApplyConfiguration       `json:"results,omitempty"`
+	Test                             []string                               `json:"test,omitempty"`
 }
 
 // ClusterReport constructs a declarative configuration of the ClusterReport type for use with
@@ -254,6 +255,16 @@ func (b *ClusterReportApplyConfiguration) WithResults(values ...*ReportResultApp
 			panic("nil value passed to WithResults")
 		}
 		b.Results = append(b.Results, *values[i])
+	}
+	return b
+}
+
+// WithTest adds the given value to the Test field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the Test field.
+func (b *ClusterReportApplyConfiguration) WithTest(values ...string) *ClusterReportApplyConfiguration {
+	for i := range values {
+		b.Test = append(b.Test, values[i])
 	}
 	return b
 }
