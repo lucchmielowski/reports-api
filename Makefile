@@ -14,6 +14,9 @@ LOCALBIN ?= $(shell pwd)/bin
 $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
 
+CODEGEN_VERSION := v0.30.0-rc.2
+CODEGEN = $(shell pwd)/bin/code-generator
+CODEGEN_ROOT = $(shell $(GO_CMD) env GOMODCACHE)/k8s.io/code-generator@$(CODEGEN_VERSION)
 CONTROLLER_TOOLS_VERSION           ?= v0.18.0
 CONTROLLER_GEN                     ?= $(LOCALBIN)/controller-gen
 GEN_CRD_API_REFERENCE_DOCS         ?= $(LOCALBIN)/crd-ref-docs
@@ -27,9 +30,17 @@ $(HELM):
 	@echo Install helm... >&2
 	@GOBIN=$(LOCALBIN) go install helm.sh/helm/v3/cmd/helm@$(HELM_VERSION)
 
+
+$(GEN_CRD_API_REFERENCE_DOCS): $(LOCALBIN)
+	GOBIN=$(LOCALBIN) go install github.com/elastic/crd-ref-docs@$(GEN_CRD_API_REFERENCE_DOCS_VERSION)
+
+$(CONTROLLER_GEN): $(LOCALBIN)
+	test -s $(LOCALBIN)/controller-gen && $(LOCALBIN)/controller-gen --version | grep -q $(CONTROLLER_TOOLS_VERSION) || \
+	GOBIN=$(LOCALBIN) $(GO_CMD) install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
+
 .PHONY: install-tools
 install-tools: ## Install tools
-install-tools: $(TOOLS)
+install-tools: $(TOOLS) $(GEN_CRD_API_REFERENCE_DOCS) $(CONTROLLER_GEN)
 
 .PHONY: clean-tools
 clean-tools: ## Remove installed tools
@@ -39,11 +50,11 @@ clean-tools: ## Remove installed tools
 all: code-generator manifests generate generate-api-docs generate-client build fmt vet 
 
 .PHONY: manifests
-manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+manifests: $(CONTROLLER_GEN) ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./apis/openreports.io/v1alpha1" output:crd:artifacts:config=crd/openreports.io/v1alpha1
 
 .PHONY: generate
-generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+generate: $(CONTROLLER_GEN) ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./apis/..."
 
 .PHONY: generate-client
@@ -71,16 +82,6 @@ fmt-check:
 vet:
 	go vet ./...
 
-.PHONY: controller-gen
-controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary. If wrong version is installed, it will be overwritten.
-$(CONTROLLER_GEN): $(LOCALBIN)
-	test -s $(LOCALBIN)/controller-gen && $(LOCALBIN)/controller-gen --version | grep -q $(CONTROLLER_TOOLS_VERSION) || \
-	GOBIN=$(LOCALBIN) $(GO_CMD) install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
-
-# Use same code-generator version as k8s.io/api
-CODEGEN_VERSION := v0.30.0-rc.2
-CODEGEN = $(shell pwd)/bin/code-generator
-CODEGEN_ROOT = $(shell $(GO_CMD) env GOMODCACHE)/k8s.io/code-generator@$(CODEGEN_VERSION)
 .PHONY: code-generator
 code-generator:
 	@GOBIN=$(PROJECT_DIR)/bin GO111MODULE=on $(GO_CMD) install k8s.io/code-generator/cmd/client-gen@$(CODEGEN_VERSION)
@@ -91,9 +92,6 @@ code-generator:
 # generate-api-docs will create api docs
 generate-api-docs: $(GEN_CRD_API_REFERENCE_DOCS)
 	$(GEN_CRD_API_REFERENCE_DOCS) --source-path=./apis/openreports.io/v1alpha1 --config=./docs/config.yaml --renderer=markdown --output-path=./docs/api-docs.md
-
-$(GEN_CRD_API_REFERENCE_DOCS): $(LOCALBIN)
-	$(call go-install-tool,$(GEN_CRD_API_REFERENCE_DOCS),github.com/elastic/crd-ref-docs,$(GEN_CRD_API_REFERENCE_DOCS_VERSION))
 
 .PHONY: codegen-api-docs
 codegen-api-docs: $(PACKAGE_SHIM) $(GEN_CRD_API_REFERENCE_DOCS) $(GENREF) ## Generate API docs
@@ -123,17 +121,3 @@ verify-codegen: all
 .PHONY: copy-crd-to-helm
 copy-crd-to-helm: manifests ## Generate CRD YAMLs and copy them to the Helm chart templates directory
 	cp crd/openreports.io/v1alpha1/*.yaml chart/templates/
-
-# go-install-tool will 'go install' any package with custom target and name of binary, if it doesn't exist
-# $1 - target path with name of binary (ideally with version)
-# $2 - package url which can be installed
-# $3 - specific version of package
-define go-install-tool
-@[ -f $(1) ] || { \
-set -e; \
-package=$(2)@$(3) ;\
-echo "Downloading $${package}" ;\
-GOBIN=$(LOCALBIN) go install $${package} ;\
-mv "$$(echo "$(1)" | sed "s/-$(3)$$//")" $(1) ;\
-}
-endef
