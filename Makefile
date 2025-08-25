@@ -32,6 +32,7 @@ $(HELM):
 
 
 $(GEN_CRD_API_REFERENCE_DOCS): $(LOCALBIN)
+	test -s $(LOCALBIN)/crd-ref-docs && $(LOCALBIN)/crd-ref-docs --version | grep -q $(GEN_CRD_API_REFERENCE_DOCS_VERSION) || \
 	GOBIN=$(LOCALBIN) go install github.com/elastic/crd-ref-docs@$(GEN_CRD_API_REFERENCE_DOCS_VERSION)
 
 $(CONTROLLER_GEN): $(LOCALBIN)
