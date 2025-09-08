@@ -19,6 +19,31 @@ entries:
       artifacthub.io/sources: https://github.com/openreports/openreports
     apiVersion: v2
     appVersion: latest
+    created: "2025-09-08T09:27:52.324002273Z"
+    description: A Helm chart for installing openreports APIs.
+    digest: e5b7a71b081ea50cc6d904ddf3519b90ff60d26f566126a486c988bb51ded6b4
+    name: openreports
+    urls:
+    - https://lucchmielowski.github.io/reports-api/openreports-v4.0.0.tgz
+    version: v4.0.0
+  - annotations:
+      artifacthub.io/crds: |
+        - kind: ClusterReport
+          version: v1alpha1
+          name: clusterreports.openreports.io
+          displayName: Cluster Report
+          description: ClusterReport is the Schema for the ClusterReport API
+        - kind: Report
+          version: v1alpha1
+          name: reports.openreports.io
+          displayName: Report
+          description: Report is the Schema for the Report API
+      artifacthub.io/home: https://github.com/openreports/openreports
+      artifacthub.io/operator: "false"
+      artifacthub.io/prerelease: "false"
+      artifacthub.io/sources: https://github.com/openreports/openreports
+    apiVersion: v2
+    appVersion: latest
     created: "2025-08-28T12:23:37.74739289Z"
     description: A Helm chart for installing openreports APIs.
     digest: d12e55879708e03a1e56a36c67021ad1c9ae88a28afafe39d88e6cfdcede592f
@@ -299,4 +324,4 @@ entries:
     urls:
     - https://lucchmielowski.github.io/reports-api/openreports-v0.0.0.tgz
     version: v0.0.0
-generated: "2025-09-02T09:12:58.973715262Z"
+generated: "2025-09-08T09:27:52.323537967Z"
